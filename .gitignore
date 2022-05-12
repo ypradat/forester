@@ -1,5 +1,33 @@
+inst/doc
+
+# R file
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-inst/doc
+.Rprofile
+
+# Mac
+.DS_Store
+
+# Tags
+*tags
+
+# Logs
+*.log
+logs/
+benchmark
+
+# Open cached files
+*.m~
+*.*swp
+*.*swo
+~$*.*pptx
+
+# Compiled sources
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so

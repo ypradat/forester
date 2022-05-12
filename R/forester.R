@@ -31,6 +31,7 @@
 #' @param add_plot A ggplot object to add to the right side of the table. To align correctly with rows, 1 unit is the height of a row and y = 0 for the center of the bottom row.
 #' @param add_plot_width Numeric. Width to display add_plot. Relative to the width of the forest plot, where 1 (the default) is the same width.
 #' @param add_plot_gap Logical. Should there be space added between the plot and the main figure? Default FALSE.
+#' @param add_plot_white Logical. Should the table background be removed for the plot? Default TRUE.
 #' @param point_sizes Vector. Length should be equal to 1 or nrow(left_side_data). The sizes of the points in the center plot, where 3.25 is the default.
 #' @param point_shapes Vector. Length should be equal to 1 or nrow(left_side_data). The shapes of the points in the center plot, where 16 (a filled circle) is the default.
 #' @param center_ggplot A ggplot object to use instead of the central plot.
@@ -71,8 +72,9 @@ forester <- function(left_side_data,
                     arrows = FALSE,
                     arrow_labels = c("Lower", "Higher"),
                     add_plot = NULL,
-                    add_plot_width = 1,
+                    add_plot_width = 30,
                     add_plot_gap = FALSE,
+                    add_plot_white = TRUE,
                     point_sizes = 3,
                     point_shapes = 16,
                     center_ggplot = NULL,
@@ -109,10 +111,6 @@ forester <- function(left_side_data,
   gdata <- data.frame(estimate = estimate,
                     ci_low = ci_low,
                     ci_high = ci_high)
-
-  if(lower_header_row){
-    gdata <- tibble::add_row(gdata, .before = 1)
-  }
 
   if(is.null(right_side_data)){
     tdata <- gdata
@@ -187,15 +185,13 @@ forester <- function(left_side_data,
   # insert a blank column so we can put the ggplot object on top
   # and correctly order columns
 
+  ggplot_data <- tibble::tibble(` `=rep(paste(rep(" ", times = round(ggplot_width, 0)),
+                                          collapse = ''), nrow(left_side_data)))
+
+  tdata_print <- cbind(left_side_data, ggplot_data, right_side_data)
   total_width <- left_width + right_width + ggplot_width
 
-  tdata_print <- left_side_data
-
   if(lower_header_row){rbind.data.frame(colnames(tdata_print), tdata_print)}
-
-  tdata_print$` ` <- paste(rep(" ", times = round(ggplot_width, 0)),
-                           collapse = '')
-  tdata_print <- cbind(tdata_print, right_side_data)
 
   tdata_print <- tibble::add_row(tdata_print)
   tdata_print <- tibble::add_row(tdata_print)
@@ -439,9 +435,7 @@ forester <- function(left_side_data,
   if(is.null(add_plot)){
 
     table_final <- mono_column(gridExtra::tableGrob(tdata_print, theme = theme, rows = NULL), ncol(left_side_data) + 1)
-
     table_final$widths[ncol(left_side_data) + 1] <- grid::unit(ggplot_width/10, "in")
-
     table_final$heights <- grid::unit(rep(0.255, times = length(table_final$heights)), "in")
 
     final <- patchwork::wrap_elements(table_final) +
@@ -466,66 +460,66 @@ forester <- function(left_side_data,
                               collapse = '')
 
     table_final <- mono_column(gridExtra::tableGrob(tdata_print, theme = theme, rows = NULL), ncol(left_side_data) + 1)
-
-    table_final <- white_column(table_final, ncol(table_final))
-
+    if (add_plot_white){
+      table_final <- white_column(table_final, ncol(table_final))
+    }
     table_final$widths[ncol(left_side_data) + 1] <- grid::unit(ggplot_width/10, "in")
-    table_final$widths[ncol(table_final)] <- grid::unit(ggplot_width/10, "in")
-
+    table_final$widths[ncol(table_final)] <- grid::unit(add_plot_width/10, "in")
     table_final$heights <- grid::unit(rep(0.255, times = length(table_final$heights)), "in")
 
-    new_full_width <- total_width + ggplot_width
+    total_width_new <- total_width + add_plot_width
 
-    png_width <- new_full_width/10 + nudge_x
+    png_width <- total_width_new/10 + nudge_x
 
     if (add_plot_gap){
-      add_plot <- add_plot + ggplot2::scale_y_continuous(limits = c(y_low, y_high), expand = c(0,0)) +
-        ggplot2::theme_classic() + # base theme
-        ggplot2::theme(axis.title.y = ggplot2::element_text(colour = "transparent"), # make axis transparent rather than removing it
-                     axis.text.y = ggplot2::element_text(colour = "transparent"), # this makes alignment much easier
-                     axis.ticks.y = ggplot2::element_line(colour = "transparent"),
-                     axis.line.y = ggplot2::element_line(colour = "transparent"),
-                     axis.title.x = ggplot2::element_text(colour = "transparent"),
-                     axis.text.x = ggplot2::element_text(colour = "transparent"),
-                     axis.ticks.x = ggplot2::element_line(colour = "transparent"),
-                     axis.line.x = ggplot2::element_line(colour = "transparent"),
-                     panel.background = ggplot2::element_rect(fill = "transparent"),
-                     plot.background = ggplot2::element_rect(fill = "transparent", color = NA),
-                     panel.grid.major = ggplot2::element_blank(),
-                     panel.grid.minor = ggplot2::element_blank(),
-                     legend.background = ggplot2::element_rect(fill = "transparent"),
-                     legend.box.background = ggplot2::element_rect(fill = "transparent"),
-                     legend.position = "none")
+      add_plot <- add_plot + ggplot2::scale_y_continuous(limits = c(y_low, y_high), expand = c(0,0))
+        # ggplot2::theme_classic() + # base theme
+        # ggplot2::theme(axis.title.y = ggplot2::element_text(colour = "transparent"), # make axis transparent rather than removing it
+        #              axis.text.y = ggplot2::element_text(colour = "transparent"), # this makes alignment much easier
+        #              axis.ticks.y = ggplot2::element_line(colour = "transparent"),
+        #              axis.line.y = ggplot2::element_line(colour = "transparent"),
+        #              axis.title.x = ggplot2::element_text(colour = "transparent"),
+        #              axis.text.x = ggplot2::element_text(colour = "transparent"),
+        #              axis.ticks.x = ggplot2::element_line(colour = "transparent"),
+        #              axis.line.x = ggplot2::element_line(colour = "transparent"),
+        #              panel.background = ggplot2::element_rect(fill = "transparent"),
+        #              plot.background = ggplot2::element_rect(fill = "transparent", color = NA),
+        #              panel.grid.major = ggplot2::element_blank(),
+        #              panel.grid.minor = ggplot2::element_blank(),
+        #              legend.background = ggplot2::element_rect(fill = "transparent"),
+        #              legend.box.background = ggplot2::element_rect(fill = "transparent"),
+        #              legend.position = "none")
     }else{
-      add_plot <- add_plot + ggplot2::scale_y_continuous(limits = c(y_low, y_high), expand = c(0,0)) +
-        ggplot2::theme_classic() + # base theme
-        ggplot2::theme(axis.title.x = ggplot2::element_text(colour = "transparent"), # make x axis (only) transparent
-                       axis.text.x = ggplot2::element_text(colour = "transparent"),
-                       axis.ticks.x = ggplot2::element_line(colour = "transparent"),
-                       axis.line.x = ggplot2::element_line(colour = "transparent"),
-                       axis.title.y = ggplot2::element_blank(),
-                       axis.text.y = ggplot2::element_blank(),
-                       axis.ticks.y = ggplot2::element_blank(),
-                       axis.line.y = ggplot2::element_blank(),
-                       panel.background = ggplot2::element_rect(fill = "transparent"),
-                       plot.background = ggplot2::element_rect(fill = "transparent", color = NA),
-                       panel.grid.major = ggplot2::element_blank(),
-                       panel.grid.minor = ggplot2::element_blank(),
-                       legend.background = ggplot2::element_rect(fill = "transparent"),
-                       legend.box.background = ggplot2::element_rect(fill = "transparent"),
-                       legend.position = "none")
+      add_plot <- add_plot + ggplot2::scale_y_continuous(limits = c(y_low, y_high), expand = c(0,0))
+      # add_plot <- add_plot + ggplot2::scale_y_continuous(limits = c(y_low, y_high), expand = c(0,0)) +
+      #   ggplot2::theme_classic() + # base theme
+      #   ggplot2::theme(axis.title.x = ggplot2::element_text(colour = "transparent"), # make x axis (only) transparent
+      #                  axis.text.x = ggplot2::element_text(colour = "transparent"),
+      #                  axis.ticks.x = ggplot2::element_line(colour = "transparent"),
+      #                  axis.line.x = ggplot2::element_line(colour = "transparent"),
+      #                  axis.title.y = ggplot2::element_blank(),
+      #                  axis.text.y = ggplot2::element_blank(),
+      #                  axis.ticks.y = ggplot2::element_blank(),
+      #                  axis.line.y = ggplot2::element_blank(),
+      #                  panel.background = ggplot2::element_rect(fill = "transparent"),
+      #                  plot.background = ggplot2::element_rect(fill = "transparent", color = NA),
+      #                  panel.grid.major = ggplot2::element_blank(),
+      #                  panel.grid.minor = ggplot2::element_blank(),
+      #                  legend.background = ggplot2::element_rect(fill = "transparent"),
+      #                  legend.box.background = ggplot2::element_rect(fill = "transparent"),
+      #                  legend.position = "none")
     }
 
     final <- patchwork::wrap_elements(table_final) +
       patchwork::inset_element(center,
                                align_to = "full",
-                               left = (left_width/new_full_width),
-                               right = ((ggplot_width + left_width)/new_full_width),
+                               left = (left_width/total_width_new),
+                               right = ((ggplot_width + left_width)/total_width_new),
                                top = 1,
                                bottom = 0.35/nrow(gdata)) +
       patchwork::inset_element(add_plot,
                                align_to = "full",
-                               left = total_width/new_full_width,
+                               left = (total_width)/total_width_new,
                                right = 1,
                                top = 1,
                                bottom = 0.35/nrow(gdata))
@@ -533,8 +527,8 @@ forester <- function(left_side_data,
     if(arrows == TRUE){
       final <- final + patchwork::inset_element(arrows_plot,
                                                 align_to = "full",
-                                                left = (left_width/new_full_width),
-                                                right = ((ggplot_width + left_width)/new_full_width),
+                                                left = (left_width/total_width_new),
+                                                right = ((ggplot_width + left_width)/total_width_new),
                                                 top = 1.5/nrow(gdata),
                                                 bottom = 0)
     }
