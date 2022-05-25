@@ -37,6 +37,7 @@ test_that("forester png works", {
            center_ggplot = NULL,
            lower_header_row = FALSE,
            render_as = "png")
+
   expect_true(file.exists(output))
 })
 

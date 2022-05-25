@@ -90,27 +90,28 @@ forester <- function(left_side_data,
   if(lower_header_row == FALSE){
     theme <- gridExtra::ttheme_minimal(core=list(
       fg_params = list(hjust = justify, x = (0.05 + (0.45/0.5) * justify), fontfamily = font_family),
-      bg_params = list(fill=c(rep(c(stripe_colour, background_colour), length.out=nrow(left_side_data)), background_colour, background_colour, background_colour))
-    ),
-      colhead = list(fg_params = list(hjust = 0, x = 0.05,
-                                    fontfamily = font_family),
-                   bg_params = list(fill = background_colour))
+      bg_params = list(fill=c(rep(c(stripe_colour, background_colour), length.out=nrow(left_side_data)),
+                              background_colour, background_colour, background_colour))
+      ),
+        colhead = list(fg_params = list(hjust = 0, x = 0.05,
+                                      fontfamily = font_family),
+                       bg_params = list(fill = background_colour))
     )
   }else{
     theme <- gridExtra::ttheme_minimal(core=list(
       fg_params = list(hjust = justify, x = (0.05 + (0.45/0.5) * justify), fontfamily = font_family),
-      bg_params = list(fill=c(rep(c(background_colour, stripe_colour), length.out=nrow(left_side_data)), background_colour, background_colour, background_colour))
-    ),
-    colhead = list(fg_params = list(hjust = 0, x = 0.05,
-                                    fontfamily = font_family,
-                                    fill = background_colour),
-                   bg_params = list(fill = background_colour))
+      bg_params = list(fill=c(rep(c(background_colour, stripe_colour), length.out=nrow(left_side_data)+1),
+                              background_colour, background_colour, background_colour))
+      ),
+      colhead = list(fg_params = list(hjust = 0, x = 0.05,
+                                      fontfamily = font_family),
+                     bg_params = list(fill = background_colour))
     )
   }
 
   gdata <- data.frame(estimate = estimate,
-                    ci_low = ci_low,
-                    ci_high = ci_high)
+                      ci_low = ci_low,
+                      ci_high = ci_high)
 
   if(is.null(right_side_data)){
     tdata <- gdata
@@ -126,8 +127,10 @@ forester <- function(left_side_data,
                                       ci_sep, tdata$ci_high, ")")))
 
     colnames(right_side_data) <- estimate_col_name
-
   }
+
+
+  if(lower_header_row){gdata <- tibble::add_row(gdata, .before=1)}
 
   # finds width in number of characters for monospaced font
 
@@ -191,7 +194,7 @@ forester <- function(left_side_data,
   tdata_print <- cbind(left_side_data, ggplot_data, right_side_data)
   total_width <- left_width + right_width + ggplot_width
 
-  if(lower_header_row){rbind.data.frame(colnames(tdata_print), tdata_print)}
+  if(lower_header_row){tdata_print <- rbind.data.frame(colnames(tdata_print), tdata_print)}
 
   tdata_print <- tibble::add_row(tdata_print)
   tdata_print <- tibble::add_row(tdata_print)
@@ -307,17 +310,17 @@ forester <- function(left_side_data,
           na.rm = TRUE) +
     ggplot2::theme_classic() + # base theme
     ggplot2::theme(axis.title.y = ggplot2::element_blank(), # remove axis, make bg transparent
-          axis.text.y = ggplot2::element_blank(),
-          axis.ticks.y = ggplot2::element_blank(),
-          axis.line.y = ggplot2::element_blank(),
-          axis.ticks.length.x = grid::unit(.07, "in"),
-          text = ggplot2::element_text(family = font_family, size = 12),
-          panel.background = ggplot2::element_rect(fill = "transparent"),
-          plot.background = ggplot2::element_rect(fill = "transparent", color = NA),
-          panel.grid.major = ggplot2::element_blank(),
-          panel.grid.minor = ggplot2::element_blank(),
-          legend.background = ggplot2::element_rect(fill = "transparent"),
-          legend.box.background = ggplot2::element_rect(fill = "transparent")) +
+                   axis.text.y = ggplot2::element_blank(),
+                   axis.ticks.y = ggplot2::element_blank(),
+                   axis.line.y = ggplot2::element_blank(),
+                   axis.ticks.length.x = grid::unit(.07, "in"),
+                   text = ggplot2::element_text(family = font_family, size = 12),
+                   panel.background = ggplot2::element_rect(fill = "transparent"),
+                   plot.background = ggplot2::element_rect(fill = "transparent", color = NA),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   legend.background = ggplot2::element_rect(fill = "transparent"),
+                   legend.box.background = ggplot2::element_rect(fill = "transparent")) +
     ggplot2::geom_vline(xintercept = null_line_at, linetype = "dashed") +
     ggplot2::scale_y_continuous(expand = c(0,0)) +
     ggplot2::scale_shape_identity() +
