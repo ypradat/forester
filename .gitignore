@@ -1,5 +1,10 @@
 inst/doc
 
+# Package files
+*.tar.gz
+*.pdf
+*.Rcheck
+
 # R file
 .Rproj.user
 .Rhistory
