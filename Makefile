@@ -5,7 +5,7 @@ PKGSRC  := $(shell basename `pwd`)
 R ?= R
 
 build:
-	$(R) CMD build --no-manual .
+	$(R) CMD build --no-manual --no-build-vignettes .
 
 install: build-cran
 	$(R) CMD INSTALL $(PKGNAME)_$(PKGVERS).tar.gz
@@ -22,13 +22,13 @@ manual:
 test:
 	$(R) -e 'if (any(as.data.frame(devtools::test())[["failed"]] > 0)) stop("Some tests failed.")'
 
-ctags: 
+ctags:
 	ctags -R R
 
 clean:
 	$(RM) -r $(PKGNAME).Rcheck/
 	$(RM) -f tags
 	$(RM) -f $(PKGNAME)_$(PKGVERS).pdf
- 
+
 clean-all: clean
-	$(RM) -r $(PKGNAME)_$(PKGVERS).tar.gz 
+	$(RM) -r $(PKGNAME)_$(PKGVERS).tar.gz
